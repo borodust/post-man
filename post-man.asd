@@ -1,12 +1,16 @@
-; (asdf - another syste definition facility )
-(asdf:defsystem :post-statics
+(asdf:defsystem :post-man
   :description "Autumn Lisp Game Jam 2019 entry"
   :author ""
   :license "GPLv3"
-  :depends-on (:trivial-gamekit :trivial-gamekit-postproc :trivial-gamekit-fistmachine)
+  :depends-on (:alexandria
+               :trivial-gamekit
+               :trivial-gamekit-postproc
+               :trivial-gamekit-fistmachine
+               :trivial-gamekit-input-handler)
   :pathname "src/"
   :serial t
   :components ((:file "packages")
+               (:file "util")
                (:file "main")
                (:module :state
                 :serial t

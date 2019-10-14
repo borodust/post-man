@@ -1,3 +1,3 @@
-(cl:defpackage :post-statics
-  (:use :cl)
-  (:export run))
+(cl:defpackage :post-man
+  (:use :cl :alexandria)
+  (:export #:run))
