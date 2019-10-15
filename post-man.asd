@@ -11,6 +11,7 @@
   :serial t
   :components ((:file "packages")
                (:file "util")
+               (:file "resources")
                (:file "main")
                (:module :state
                 :serial t
