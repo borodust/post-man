@@ -8,7 +8,7 @@
 
 (defmethod gamekit:draw ((this main-menu-state))
   (with-slots (options selected-option-idx) this
-    (bodge-canvas:clear-buffers (gamekit:vec4 0.1 0.1 0.1 1))
+    (bodge-canvas:clear-buffers *background*)
     (gamekit:with-pushed-canvas ()
       (gamekit:translate-canvas 230 290)
       (gamekit:scale-canvas 0.5 0.5)
@@ -21,10 +21,10 @@
             when (= i selected-option-idx)
               do (gamekit:draw-text ">" (gamekit:vec2 0 (* i 15))
                                     :font (gamekit:make-font :retro 20)
-                                    :fill-color (gamekit:vec4 0.9 0.9 0.9 1))
+                                    :fill-color *foreground*)
             do (gamekit:draw-text (string option) (gamekit:vec2 20 (* i 15))
                                   :font (gamekit:make-font :retro 20)
-                                  :fill-color (gamekit:vec4 0.9 0.9 0.9 1))))))
+                                  :fill-color *foreground*)))))
 
 
 (defun select-next-menu-option (state)
@@ -40,7 +40,7 @@
 (defun invoke-action (this)
   (with-slots (options selected-option-idx) this
     (case (aref options selected-option-idx)
-      (:start)
+      (:start (gamekit.fistmachine:transition-to 'gameplay-state))
       (:exit (gamekit:stop)))))
 
 

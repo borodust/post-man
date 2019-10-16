@@ -1,6 +1,10 @@
 (cl:in-package :post-man)
 
 
+(defvar *background* (gamekit:vec4 0.1 0.1 0.1 1))
+(defvar *foreground* (gamekit:vec4 0.9 0.9 0.9 1))
+
+
 (defclass input-handling-state (gamekit.input-handler:input-handler) ())
 
 
