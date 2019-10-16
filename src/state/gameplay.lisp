@@ -1,28 +1,24 @@
 (cl:in-package :post-man)
 
 
-(defparameter *grid-size* 32)
 
-(defclass gameplay-state (input-handling-state) ())
+
+
+(defclass gameplay-state (input-handling-state)
+  ((level :initform (make-instance 'level))
+   (bogdans :initform (list (make-instance 'bogdan)))
+   (rob-o-man :initform (make-instance 'rob-o-man))))
 
 
 (defmethod gamekit:draw ((this gameplay-state))
-  (with-slots () this
+  (with-slots (level bogdans rob-o-man) this
     (bodge-canvas:clear-buffers *background*)
-    (bodge-canvas:translate-canvas 400 400)
+    (render level)
+    (loop for bogdan in bogdans
+          do (render bogdan))
     (gamekit:with-pushed-canvas ()
-      (let* ((factor (* 0.5 (bodge-util:real-time-seconds)))
-             (clamped (abs (- (mod factor 2) 1))))
-        (bodge-canvas:rotate-canvas factor)
-        (bodge-canvas:translate-canvas -400 -400)
-        (bodge-canvas:skew-canvas 0.5 0.5)
-        (bodge-canvas:scale-canvas clamped clamped))
-      (loop for x from 0 below 32
-            do (loop for y from 0 below 32
-                     do (gamekit:draw-rect (gamekit:vec2 (* x *grid-size*)
-                                                         (* y *grid-size*))
-                                           *grid-size* *grid-size*
-                                           :stroke-paint *foreground*))))))
+      (gamekit:translate-canvas 200 0)
+      (render rob-o-man))))
 
 
 (defun pause-game ()

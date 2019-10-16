@@ -4,7 +4,7 @@
   ()
   (:viewport-width 800)
   (:viewport-height 600)
-  (:viewport-title "Post Statics")
+  (:viewport-title "POST-MAN")
   (:default-initargs :initial-state 'init-state))
 
 (defun run ()

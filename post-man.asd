@@ -13,6 +13,11 @@
                (:file "util")
                (:file "resources")
                (:file "main")
+               (:module :object
+                :serial t
+                :components ((:file "rob-o-man")
+                             (:file "bogdan")
+                             (:file "level")))
                (:module :state
                 :serial t
                 :components ((:file "init")

@@ -1,6 +1,8 @@
 (cl:in-package :post-man)
 
 
+(defvar *origin* (gamekit:vec2 0 0))
+
 (defvar *background* (gamekit:vec4 0.1 0.1 0.1 1))
 (defvar *foreground* (gamekit:vec4 0.9 0.9 0.9 1))
 
@@ -17,3 +19,6 @@
   (unwind-protect
        (call-next-method)
     (gamekit.input-handler:deactivate-input-handler this)))
+
+
+(defgeneric render (object))
