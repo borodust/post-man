@@ -15,12 +15,14 @@
                (:file "main")
                (:module :object
                 :serial t
-                :components ((:file "rob-o-man")
+                :components ((:file "object")
+                             (:file "rob-o-man")
                              (:file "bogdan")
                              (:file "level")))
                (:module :state
                 :serial t
-                :components ((:file "init")
+                :components ((:file "state")
+                             (:file "init")
                              (:file "main-menu")
                              (:file "pause-menu")
                              (:file "gameplay")
