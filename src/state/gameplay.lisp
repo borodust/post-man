@@ -14,7 +14,6 @@
     (loop for bogdan in bogdans
           do (render bogdan))
     (gamekit:with-pushed-canvas ()
-      (gamekit:translate-canvas 200 0)
       (render rob-o-man))))
 
 
@@ -32,10 +31,12 @@
 
 
 (defmethod gamekit:act ((this gameplay-state))
-  (with-slots (rob-o-man) this
-    (move-object rob-o-man (gamekit:mult (calc-movement-vector
-                                          (gamekit.input-handler:pressed-buttons this))
-                                         *rob-o-man-speed*))
+  (with-slots (rob-o-man level) this
+    (move-object rob-o-man (calc-movement-vector
+                            (gamekit.input-handler:pressed-buttons this)))
+    (let ((position (next-position rob-o-man)))
+      (unless (level-collide level position (bound-of rob-o-man))
+        (update-position rob-o-man position)))
     (update rob-o-man)))
 
 

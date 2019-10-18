@@ -18,6 +18,7 @@
                 :components ((:file "object")
                              (:file "rob-o-man")
                              (:file "bogdan")
+                             (:file "obstacle")
                              (:file "level")))
                (:module :state
                 :serial t

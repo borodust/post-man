@@ -1,17 +1,46 @@
 (cl:in-package :post-man)
 
-(defparameter *grid-cell-width* 32)
-(defparameter *grid-size* 20)
-
-
 (defun fill-obstacle-map (map)
   (loop repeat *grid-size*
-        do (setf (gethash (cons (random *grid-size*) (random *grid-size*)) map) t))
+        do (let* ((grid-x (random *grid-size*))
+                  (grid-y (random *grid-size*))
+                  (obstacle (make-instance 'obstacle
+                                           :position (gamekit:vec2 (* grid-x
+                                                                      *grid-cell-width*)
+                                                                   (* grid-y
+                                                                      *grid-cell-width*))
+                                           :bound (gamekit:vec2 *grid-cell-width*
+                                                                *grid-cell-width*))))
+             (setf (gethash (cons grid-x grid-y) map) obstacle)))
   map)
 
 
 (defclass level ()
   ((obstacle-map :initform (fill-obstacle-map (make-hash-table :test 'equal)))))
+
+
+(defun find-adjascent-cells (level position)
+  (with-slots (obstacle-map) level
+    (let* ((grid-x (truncate (/ (gamekit:x position) *grid-cell-width*)))
+           (grid-y (truncate (/ (gamekit:y position) *grid-cell-width*))))
+      (flet ((%get (x y)
+               (gethash (cons x y) obstacle-map)))
+        (remove-if #'null (list (%get grid-x grid-y)
+                                (%get (1+ grid-x) grid-y)
+                                (%get (1+ grid-x) (1+ grid-y))
+                                (%get grid-x (1+ grid-y))
+                                (%get (1- grid-x) (1+ grid-y))
+                                (%get (1- grid-x) grid-y)
+                                (%get (1- grid-x) (1- grid-y))
+                                (%get grid-x (1- grid-y))
+                                (%get (1+ grid-x) (1- grid-y))))))))
+
+(defun level-collide (level position bound)
+  (with-slots (obstacle-map) level
+    (let ((obstacle (make-instance 'obstacle :position position :bound bound))
+          (level-obstacles (find-adjascent-cells level position)))
+      (loop for level-obstacle in level-obstacles
+              thereis (collidingp obstacle level-obstacle)))))
 
 
 (defmethod render ((this level))

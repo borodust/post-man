@@ -5,4 +5,5 @@
 
 
 (defmethod render ((this bogdan))
-  (gamekit:draw-rect *origin* 50 100 :fill-paint (gamekit:vec4 0.4 0.1 0.1 1)))
+  (gamekit:draw-rect *origin* *grid-cell-width* (* *grid-cell-width* 2)
+                     :fill-paint (gamekit:vec4 0.4 0.1 0.1 1)))
