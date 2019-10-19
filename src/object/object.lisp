@@ -49,7 +49,7 @@
 ;;;
 (defclass movable (updatable positionable)
   ((speed :initform 0 :initarg :speed)
-   (direction :initform (gamekit:vec2 0 0))))
+   (direction :initform nil)))
 
 
 (defun move-object (object direction)

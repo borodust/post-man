@@ -35,6 +35,13 @@
                                 (%get grid-x (1- grid-y))
                                 (%get (1+ grid-x) (1- grid-y))))))))
 
+(defun level-obstacle-exists (level position)
+  (with-slots (obstacle-map) level
+    (let ((x (truncate (gamekit:x position)))
+          (y (truncate (gamekit:y position))))
+      (gethash (cons x y) obstacle-map))))
+
+
 (defun level-collide (level position bound)
   (with-slots (obstacle-map) level
     (let ((obstacle (make-instance 'obstacle :position position :bound bound))

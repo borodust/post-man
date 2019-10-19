@@ -5,5 +5,5 @@
 
 (gamekit:define-font :retro "fonts/retro-gaming/Retro Gaming.ttf")
 
-(gamekit:define-image :splash "images/Post_Logo.png"
+(gamekit:define-image :splash "images/menu/Post_Logo.png"
   :use-nearest-interpolation t)
