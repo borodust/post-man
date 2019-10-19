@@ -104,3 +104,15 @@
   (:method (object)
     (declare (ignore object))
     '((0 . 0))))
+
+
+;;;
+;;; OBJECTIVE
+;;;
+(defclass objective () ())
+
+(defgeneric activatedp (objective))
+
+(defgeneric activate (objective))
+
+(defgeneric deactivate (objective))

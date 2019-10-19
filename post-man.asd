@@ -20,9 +20,9 @@
                              (:file "being")
                              (:file "box")
                              (:file "rack")
-                             (:file "rob-o-man")
                              (:file "bogdan")
-                             (:file "level")))
+                             (:file "level")
+                             (:file "rob-o-man")))
                (:module :state
                 :serial t
                 :components ((:file "state")
