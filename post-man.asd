@@ -6,7 +6,8 @@
                :trivial-gamekit
                :trivial-gamekit-postproc
                :trivial-gamekit-fistmachine
-               :trivial-gamekit-input-handler)
+               :trivial-gamekit-input-handler
+               :bodge-heap)
   :pathname "src/"
   :serial t
   :components ((:file "packages")
@@ -16,6 +17,7 @@
                (:module :object
                 :serial t
                 :components ((:file "object")
+                             (:file "being")
                              (:file "rob-o-man")
                              (:file "bogdan")
                              (:file "obstacle")
