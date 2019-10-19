@@ -1,32 +1,27 @@
 (cl:in-package :post-man)
 
-(defun fill-obstacle-map (map)
-  (loop repeat *grid-size*
-        do (let* ((grid-x (random *grid-size*))
-                  (grid-y (random *grid-size*))
-                  (obstacle (make-instance 'obstacle
-                                           :position (gamekit:vec2 (* grid-x
-                                                                      *grid-cell-width*)
-                                                                   (* grid-y
-                                                                      *grid-cell-width*))
-                                           :bound (gamekit:vec2 *grid-cell-width*
-                                                                *grid-cell-width*))))
-             (setf (gethash (cons grid-x grid-y) map) obstacle)))
-  map)
-
 
 (defclass level ()
-  ((obstacle-map :initform (fill-obstacle-map (make-hash-table :test 'equal)))))
+  ((obstacle-map :initform (make-hash-table :test 'equal))
+   (object-map :initform (make-hash-table))))
+
+
+(defun %level-obstacle-exists (level cell)
+  (with-slots (obstacle-map) level
+    (let ((x (car cell))
+          (y (cdr cell)))
+      (or (< x 0) (>= x *grid-size*)
+          (< y 0) (>= y *grid-size*)
+          (gethash cell obstacle-map)))))
 
 
 (defun %find-adjacent-cells (level node)
   (with-slots (obstacle-map) level
     (destructuring-bind (grid-x . grid-y) node
       (flet ((%get (x y)
-               (when (and (<= 0 x (1- *grid-size*))
-                          (<= 0 y (1- *grid-size*))
-                          (not (gethash (cons x y) obstacle-map)))
-                 (cons x y))))
+               (let ((cell (cons x y)))
+                 (unless (%level-obstacle-exists level cell)
+                   cell))))
         (remove-if #'null (list (%get (1+ grid-x) grid-y)
                                 (%get grid-x (1+ grid-y))
                                 (%get (1- grid-x) grid-y)
@@ -35,26 +30,16 @@
 
 (defun level-obstacle-exists (level position)
   (with-slots (obstacle-map) level
-    (let ((x (truncate (gamekit:x position)))
-          (y (truncate (gamekit:y position))))
-      (gethash (cons x y) obstacle-map))))
+    (let* ((x (truncate (gamekit:x position)))
+           (y (truncate (gamekit:y position)))
+           (cell (cons x y)))
+      (%level-obstacle-exists level cell))))
 
 
 (defmethod render ((this level))
-  (with-slots (obstacle-map) this
-    (loop for x from 0 below *grid-size*
-          do (loop for y from 0 below *grid-size*
-                   if (gethash (cons x y) obstacle-map)
-                     do (gamekit:draw-rect (gamekit:vec2 (* x *grid-cell-width*)
-                                                         (* y *grid-cell-width*))
-                                           *grid-cell-width* *grid-cell-width*
-                                           :fill-paint *foreground*
-                                           :stroke-paint *foreground*)
-                   else
-                     do (gamekit:draw-rect (gamekit:vec2 (* x *grid-cell-width*)
-                                                         (* y *grid-cell-width*))
-                                           *grid-cell-width* *grid-cell-width*
-                                           :stroke-paint *foreground*)))))
+  (with-slots (object-map) this
+    (loop for object being the hash-key of object-map
+          do (render object))))
 
 
 (defun find-level-path (level start goal)
@@ -78,15 +63,63 @@
                               :node-equal #'equal)))))
 
 
-(defun find-level-random-position (level)
+(defun %find-level-random-cell (level &optional (configuration '((0 . 0))))
   (with-slots (obstacle-map) level
     (flet ((%gen ()
-             (cons (random *grid-size*) (random *grid-size*))))
+             (cons (random *grid-size*) (random *grid-size*)))
+           (%collides (cell)
+             (loop with (cell-x . cell-y) = cell
+                   for (relative-x . relative-y) in configuration
+                   for x = (+ relative-x cell-x)
+                   for y = (+ relative-y cell-y)
+                     thereis (gethash (cons x y) obstacle-map))))
       (loop for cell = (%gen)
-            for obstacle = (gethash cell obstacle-map)
-            while obstacle
-            finally (return (gamekit:vec2 (car cell) (cdr cell)))))))
+            while (%collides cell)
+            finally (return cell)))))
+
+
+(defun find-level-random-position (level &optional (configuration '((0 . 0))))
+  (let ((cell (%find-level-random-cell level configuration)))
+    (gamekit:vec2 (car cell) (cdr cell))))
 
 
 (defun find-level-random-path (level position)
   (find-level-path level position (find-level-random-position level)))
+
+
+(defun spawn-object (level object)
+  (with-slots (obstacle-map object-map) level
+    (let* ((configuration (obstacle-of object))
+           (cell (%find-level-random-cell level configuration)))
+      (update-position object (gamekit:vec2 (car cell) (cdr cell)))
+      (loop with (cell-x . cell-y) = cell
+            for (x-offset . y-offset) in configuration
+            for obstacle-cell = (cons (+ cell-x x-offset) (+ cell-y y-offset))
+            do (setf (gethash obstacle-cell obstacle-map) object))
+      (setf (gethash object object-map) configuration)
+      object)))
+
+
+(defun spawn-box (level)
+  (spawn-object level (make-instance 'box)))
+
+
+(defun spawn-vertical-rack (level)
+  (spawn-object level (make-instance 'vertical-rack)))
+
+
+(defun spawn-horizontal-rack (level)
+  (spawn-object level (make-instance 'horizontal-rack)))
+
+
+(defun fill-level (level)
+  (loop repeat *grid-size*
+        if (oddp (random 2))
+          do (spawn-vertical-rack level)
+        else
+          do (spawn-horizontal-rack level))
+  (spawn-box level))
+
+
+(defmethod initialize-instance :after ((this level) &key)
+  (fill-level this))

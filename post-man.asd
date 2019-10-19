@@ -18,9 +18,10 @@
                 :serial t
                 :components ((:file "object")
                              (:file "being")
+                             (:file "box")
+                             (:file "rack")
                              (:file "rob-o-man")
                              (:file "bogdan")
-                             (:file "obstacle")
                              (:file "level")))
                (:module :state
                 :serial t

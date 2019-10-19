@@ -2,7 +2,8 @@
 
 
 (declaim (special *level*
-                  *player*))
+                  *player*
+                  *gameplay*))
 
 
 (defvar *origin* (gamekit:vec2 0 0))

@@ -88,3 +88,19 @@
          (> (+ (gamekit:y this-position)
                (gamekit:y this-bound))
             (gamekit:y that-position)))))
+
+
+;;;
+;;; INTERACTABLE
+;;;
+(defgeneric interact (this that)
+  (:method (this that) (declare (ignore this that))))
+
+
+;;;
+;;; OBSTACLE
+;;;
+(defgeneric obstacle-of (object)
+  (:method (object)
+    (declare (ignore object))
+    '((0 . 0))))
