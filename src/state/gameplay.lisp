@@ -3,6 +3,11 @@
 (defparameter *max-bogdan-count* 30)
 (defparameter *max-box-count* 20)
 
+(defparameter *capture-fade-out-time* 5)
+(defparameter *capture-fade-out-scale* 5)
+
+(defparameter *level-fade-out-time* 1)
+
 (defclass gameplay-state (input-handling-state)
   ((level :initform nil)
    (bogdans :initform (list))
@@ -17,8 +22,10 @@
    (next-seed :initform nil)
    (total-boxes-placed :initform 0 :initarg :total-boxes-placed)
    (total-time-spent :initform 0 :initarg :total-time-spent)
+   (dpad-state :initform nil)
    (started-at :initform (bodge-util:real-time-seconds))
-   (dpad-state :initform nil)))
+   (captured-at :initform nil)
+   (finished-at :initform nil)))
 
 
 (defmethod initialize-instance :after ((this gameplay-state) &key level)
@@ -26,9 +33,19 @@
     (let ((*gameplay* this))
       (setf random-generator (random-state:make-generator :mersenne-twister-64 seed)
             level-number level
-            box-count (min *max-box-count* (* 5 (1+ (truncate (/ level 5)))))
-            bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 5)))))
+            box-count (min *max-box-count* (* 1 (1+ (truncate (/ level 2)))))
+            bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 3)))))
             next-seed (random-integer #xFFFFFFFFFFFFFFFF)))))
+
+
+(defun calc-level-stats (this)
+  (with-slots (total-boxes-placed total-time-spent started-at captured-at level-number)
+      this
+    (let ((time-spent-current-level (- (or captured-at (bodge-util:real-time-seconds))
+                                       started-at)))
+      (values total-boxes-placed
+              (+ total-time-spent time-spent-current-level)
+              level-number))))
 
 
 (defun transition-to-endgame (this)
@@ -40,12 +57,15 @@
                                        :level level-reached)))
 
 
-(defun calc-level-stats (this)
-  (with-slots (total-boxes-placed total-time-spent started-at level-number) this
-    (let ((time-spent-current-level (- (bodge-util:real-time-seconds) started-at)))
-      (values total-boxes-placed
-              (+ total-time-spent time-spent-current-level)
-              level-number))))
+(defun transition-to-next-level (this)
+  (with-slots (next-seed) this
+    (multiple-value-bind (boxes-placed time-spent level-reached)
+        (calc-level-stats this)
+      (gamekit.fistmachine:transition-to 'gameplay-state
+                                         :level (1+ level-reached)
+                                         :seed next-seed
+                                         :total-boxes-placed boxes-placed
+                                         :total-time-spent time-spent))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -75,6 +95,16 @@
       (spawn-box))))
 
 
+(defun play-endgame-sequence (this)
+  (with-slots (captured-at) this
+    (setf captured-at (bodge-util:real-time-seconds))))
+
+
+(defun play-next-level-sequence (this)
+  (with-slots (finished-at) this
+    (setf finished-at (bodge-util:real-time-seconds))))
+
+
 (defun calc-text-width (text font)
   (multiple-value-bind (origin width height advance)
       (gamekit:calc-text-bounds text font)
@@ -83,29 +113,21 @@
 
 
 (defmethod objective-reached ((this gameplay-state))
-  (with-slots (box-count total-boxes-placed next-seed)
+  (with-slots (box-count total-boxes-placed)
       this
     (decf box-count)
     (incf total-boxes-placed)
     (if (> box-count 0)
         (spawn-box)
-        (multiple-value-bind (boxes-placed time-spent level-reached)
-            (calc-level-stats this)
-          (gamekit.fistmachine:transition-to 'gameplay-state
-                                             :level (1+ level-reached)
-                                             :seed next-seed
-                                             :total-boxes-placed boxes-placed
-                                             :total-time-spent time-spent)))))
+        (play-next-level-sequence this))))
 
 
 (defmethod player-captured ((this gameplay-state))
-  (transition-to-endgame this))
+  (play-endgame-sequence this))
 
 
-(defmethod gamekit:draw ((this gameplay-state))
-  (with-slots (renderables level-number box-count hud-font) this
-    (bodge-canvas:clear-buffers *background*)
-    (bodge-canvas:antialias-shapes nil)
+(defun render-gameplay (this)
+  (with-slots (renderables level-number box-count hud-font started-at) this
     (flet ((%y-coord (renderable)
              (gamekit:y (position-of renderable))))
       (stable-sort renderables #'> :key #'%y-coord)
@@ -122,16 +144,75 @@
                                           6)
                                        (- (gamekit:viewport-height) 25))
                          :font hud-font
-                         :fill-color *foreground*))))
+                         :fill-color *foreground*))
+    (when (< (- (bodge-util:real-time-seconds) started-at) *level-fade-out-time*)
+      (let ((scale (/ (- (bodge-util:real-time-seconds) started-at)
+                      *level-fade-out-time*)))
+        (gamekit:draw-rect *origin*
+                           (gamekit:viewport-width)
+                           (gamekit:viewport-height)
+                           :fill-paint (gamekit:vec4 0.1 0.1 0.1 (- 1 scale)))))))
+
+
+(defun render-endgame (this)
+  (with-slots (rob-o-man captured-at) this
+    (let* ((transition
+             (min 1.0 (/ (- (bodge-util:real-time-seconds) captured-at) *capture-fade-out-time*)))
+           (scale (1+ (* (- *capture-fade-out-scale* 1) transition)))
+           (scaled-x (* (+ (gamekit:x (position-of rob-o-man)) 1)
+                        (* *grid-cell-width* scale)))
+           (scaled-y (* (+ (gamekit:y (position-of rob-o-man)) 1)
+                        (* *grid-cell-width* scale))))
+      (gamekit:translate-canvas (* (+ (- scaled-x) (/ (gamekit:viewport-width) 2))
+                                   transition)
+                                (* (+ (- scaled-y) (/ (gamekit:viewport-height) 2))
+                                   transition))
+      (gamekit:scale-canvas scale scale)
+      (gamekit:with-pushed-canvas ()
+        (render-gameplay this))
+      (gamekit:draw-rect *origin*
+                         (gamekit:viewport-width)
+                         (gamekit:viewport-height)
+                         :fill-paint (gamekit:vec4 0.1 0.1 0.1
+                                                   (/ scale
+                                                      *capture-fade-out-scale*))))))
+
+
+(defun render-next-level (this)
+  (with-slots (finished-at) this
+    (render-gameplay this)
+    (let ((transition (min 1.0 (/ (- (bodge-util:real-time-seconds) finished-at)
+                                  *level-fade-out-time*))))
+      (gamekit:draw-rect *origin*
+                         (gamekit:viewport-width)
+                         (gamekit:viewport-height)
+                         :fill-paint (gamekit:vec4 0.1 0.1 0.1 transition)))))
+
+
+(defmethod gamekit:draw ((this gameplay-state))
+  (with-slots (captured-at finished-at) this
+    (bodge-canvas:clear-buffers *background*)
+    (bodge-canvas:antialias-shapes nil)
+    (cond
+      (captured-at (render-endgame this))
+      (finished-at (render-next-level this))
+      (t (render-gameplay this)))))
 
 
 (defmethod gamekit:act ((this gameplay-state))
-  (with-slots (rob-o-man bogdans level) this
-    (with-bound-objects (this)
-      (update level)
-      (update rob-o-man)
-      (loop for bogdan in bogdans
-            do (update bogdan)))))
+  (with-slots (rob-o-man bogdans level captured-at finished-at) this
+    (cond
+      (captured-at (when (> (- (bodge-util:real-time-seconds) captured-at)
+                            *capture-fade-out-time*)
+                     (transition-to-endgame this)))
+      (finished-at (when (> (- (bodge-util:real-time-seconds) finished-at)
+                            *level-fade-out-time*)
+                     (transition-to-next-level this)))
+      (t (with-bound-objects (this)
+           (update level)
+           (update rob-o-man)
+           (loop for bogdan in bogdans
+                 do (update bogdan)))))))
 
 
 (defmethod register-renderable ((this gameplay-state) renderable)

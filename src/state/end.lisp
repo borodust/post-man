@@ -23,7 +23,7 @@
     (draw-splash)
     (gamekit:with-pushed-canvas ()
       (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 190) 180)
-      (gamekit:draw-text (format nil "Level:~35T~D" level)
+      (gamekit:draw-text (format nil "Level:~27T~D" level)
                          *origin*
                          :font stat-font
                          :fill-color *foreground*)
