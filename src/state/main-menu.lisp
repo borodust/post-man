@@ -1,5 +1,11 @@
 (cl:in-package :post-man)
 
+(defun draw-splash ()
+  (gamekit:with-pushed-canvas ()
+    (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 160)
+                              (/ (gamekit:viewport-height) 2))
+    (gamekit:scale-canvas 0.5 0.5)
+    (gamekit:draw-image (gamekit:vec2 0 0) :splash)))
 
 (defclass main-menu-state (input-handling-state)
   ((options :initform (make-array 2 :initial-contents '(:exit :start)))
@@ -9,11 +15,7 @@
 (defmethod gamekit:draw ((this main-menu-state))
   (with-slots (options selected-option-idx) this
     (bodge-canvas:clear-buffers *background*)
-    (gamekit:with-pushed-canvas ()
-      (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 160)
-                                (/ (gamekit:viewport-height) 2))
-      (gamekit:scale-canvas 0.5 0.5)
-      (gamekit:draw-image (gamekit:vec2 0 0) :splash))
+    (draw-splash)
     (gamekit:with-pushed-canvas ()
       (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 100)
                                 (- (/ (gamekit:viewport-height) 2) 180))
@@ -83,11 +85,7 @@
   (invoke-action this))
 
 
-(defmethod gamekit.input-handler:button-pressed ((this main-menu-state)
-                                                 (button (eql :enter)))
-  (invoke-action this))
-
 
 (defmethod gamekit.input-handler:button-pressed ((this main-menu-state)
-                                                 (button (eql :gamepad-x)))
+                                                 (button (eql :gamepad-a)))
   (invoke-action this))

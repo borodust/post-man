@@ -29,8 +29,8 @@
                 :serial t
                 :components ((:file "state")
                              (:file "init")
-                             (:file "main-menu")
                              (:file "pause-menu")
                              (:file "gameplay")
                              (:file "end")
+                             (:file "main-menu")
                              (:file "credits")))))

@@ -12,9 +12,13 @@
    (level-number :initform nil)
    (box-count :initform nil)
    (bogdan-count :initform nil)
-   (hud-font :initform (gamekit:make-font :retro 50))
+   (hud-font :initform (gamekit:make-font :retro 34))
    (seed :initform (error ":seed missing") :initarg :seed)
-   (next-seed :initform nil)))
+   (next-seed :initform nil)
+   (total-boxes-placed :initform 0 :initarg :total-boxes-placed)
+   (total-time-spent :initform 0 :initarg :total-time-spent)
+   (started-at :initform (bodge-util:real-time-seconds))
+   (dpad-state :initform nil)))
 
 
 (defmethod initialize-instance :after ((this gameplay-state) &key level)
@@ -25,6 +29,23 @@
             box-count (min *max-box-count* (* 5 (1+ (truncate (/ level 5)))))
             bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 5)))))
             next-seed (random-integer #xFFFFFFFFFFFFFFFF)))))
+
+
+(defun transition-to-endgame (this)
+  (multiple-value-bind (boxes-placed time-spent level-reached)
+      (calc-level-stats this)
+    (gamekit.fistmachine:transition-to 'endgame-state
+                                       :boxes-collected boxes-placed
+                                       :seconds-spent time-spent
+                                       :level level-reached)))
+
+
+(defun calc-level-stats (this)
+  (with-slots (total-boxes-placed total-time-spent started-at level-number) this
+    (let ((time-spent-current-level (- (bodge-util:real-time-seconds) started-at)))
+      (values total-boxes-placed
+              (+ total-time-spent time-spent-current-level)
+              level-number))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -54,29 +75,35 @@
       (spawn-box))))
 
 
-(defun calc-text-width (text)
+(defun calc-text-width (text font)
   (multiple-value-bind (origin width height advance)
-      (gamekit:calc-text-bounds text (gamekit:make-font :retro 34))
+      (gamekit:calc-text-bounds text font)
     (declare (ignore origin width height))
     advance))
 
 
 (defmethod objective-reached ((this gameplay-state))
-  (with-slots (box-count level-number next-seed) this
+  (with-slots (box-count total-boxes-placed next-seed)
+      this
     (decf box-count)
+    (incf total-boxes-placed)
     (if (> box-count 0)
         (spawn-box)
-        (gamekit.fistmachine:transition-to 'gameplay-state :level (1+ level-number)
-                                           :seed next-seed))))
+        (multiple-value-bind (boxes-placed time-spent level-reached)
+            (calc-level-stats this)
+          (gamekit.fistmachine:transition-to 'gameplay-state
+                                             :level (1+ level-reached)
+                                             :seed next-seed
+                                             :total-boxes-placed boxes-placed
+                                             :total-time-spent time-spent)))))
 
 
 (defmethod player-captured ((this gameplay-state))
-  (with-slots () this
-    (gamekit.fistmachine:transition-to 'main-menu-state)))
+  (transition-to-endgame this))
 
 
 (defmethod gamekit:draw ((this gameplay-state))
-  (with-slots (renderables level-number box-count) this
+  (with-slots (renderables level-number box-count hud-font) this
     (bodge-canvas:clear-buffers *background*)
     (bodge-canvas:antialias-shapes nil)
     (flet ((%y-coord (renderable)
@@ -84,17 +111,17 @@
       (stable-sort renderables #'> :key #'%y-coord)
       (loop for renderable across renderables
             do (render renderable)))
-    (gamekit:draw-text (format nil "Level ~A" level-number)
+    (gamekit:draw-text (format nil "Level ~2,'0d" level-number)
                        (gamekit:vec2 6 (- (gamekit:viewport-height) 25))
-                       :font (gamekit:make-font :retro 34)
+                       :font hud-font
                        :fill-color *foreground*)
-    (let ((text (format nil "Left: ~A" box-count)))
+    (let ((text (format nil "Left: ~2,'0d" box-count)))
       (gamekit:draw-text text
                          (gamekit:vec2 (- (gamekit:viewport-width)
-                                          (calc-text-width text)
+                                          (calc-text-width text hud-font)
                                           6)
                                        (- (gamekit:viewport-height) 25))
-                         :font (gamekit:make-font :retro 34)
+                         :font hud-font
                          :fill-color *foreground*))))
 
 
@@ -117,8 +144,8 @@
     (deletef renderables renderable)))
 
 
-(defun pause-game ()
-  (gamekit.fistmachine:transition-to 'main-menu-state))
+(defun pause-game (this)
+  (transition-to-endgame this))
 
 
 (defun interact-with-obstacles (this)
@@ -132,12 +159,12 @@
 
 (defmethod gamekit.input-handler:button-pressed ((this gameplay-state)
                                                  (button (eql :gamepad-start)))
-  (pause-game))
+  (pause-game this))
 
 
 (defmethod gamekit.input-handler:button-pressed ((this gameplay-state)
                                                  (button (eql :escape)))
-  (pause-game))
+  (pause-game this))
 
 
 (defmethod gamekit.input-handler:button-pressed ((this gameplay-state)
@@ -146,8 +173,13 @@
 
 
 (defmethod gamekit.input-handler:button-pressed ((this gameplay-state)
-                                                 (button (eql :gamepad-x)))
+                                                 (button (eql :gamepad-a)))
   (interact-with-obstacles this))
+
+
+(defmethod gamekit.input-handler:dpad-changed ((this gameplay-state) state)
+  (with-slots (dpad-state) this
+    (setf dpad-state state)))
 
 
 (defmethod generate-random-integer ((this gameplay-state) bound)
@@ -158,3 +190,18 @@
 (defmethod generate-random-float ((this gameplay-state) bound)
   (with-slots (random-generator) this
     (random-state:random-float random-generator 0 (- bound single-float-epsilon))))
+
+
+(defmethod select-direction ((this gameplay-state))
+  (with-slots (dpad-state) this
+    (let ((button-bag (append (when dpad-state
+                                (list dpad-state))
+                              (gamekit.input-handler:pressed-buttons *gameplay*))))
+      (flet ((%select (direction &rest buttons)
+               (when (loop for button in buttons
+                             thereis (member button button-bag))
+                 direction)))
+        (or (%select :up :w :up)
+            (%select :left :a :left)
+            (%select :down :s :down )
+            (%select :right :d :right))))))

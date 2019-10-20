@@ -115,3 +115,6 @@
         else
           do (setf accumulator (* accumulator (- value 128)))
         finally (return (logxor result accumulator))))
+
+
+(defgeneric select-direction (state))
