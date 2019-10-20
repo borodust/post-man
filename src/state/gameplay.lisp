@@ -1,5 +1,7 @@
 (cl:in-package :post-man)
 
+(defparameter *max-bogdan-count* 30)
+(defparameter *max-box-count* 20)
 
 (defclass gameplay-state (input-handling-state)
   ((level :initform nil)
@@ -7,15 +9,19 @@
    (rob-o-man :initform nil)
    (renderables :initform (make-array 0 :adjustable t :fill-pointer t))
    (random-generator :initform nil)
-   (difficulty :initform 0)
-   (boxes :initform 0)
+   (level-number :initform nil)
+   (box-count :initform nil)
+   (bogdan-count :initform nil)
    (hud-font :initform (gamekit:make-font :retro 50))))
 
 
-(defmethod initialize-instance :after ((this gameplay-state) &key)
-  (with-slots (random-generator) this
+(defmethod initialize-instance :after ((this gameplay-state) &key level)
+  (with-slots (random-generator level-number box-count bogdan-count) this
     (setf random-generator (random-state:make-generator :mersenne-twister-64
-                                                        (derive-seed)))))
+                                                        (derive-seed))
+          level-number level
+          box-count (min *max-box-count* (* 5 (1+ (truncate (/ level 5)))))
+          bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 5))))))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -26,16 +32,23 @@
        ,@body)))
 
 
+(defun spawn-box ()
+  (with-slots (level bogdans) *gameplay*
+    (add-object level (make-instance 'box)
+                (position-of (first bogdans)))))
+
+
 (defmethod gamekit:post-initialize ((this gameplay-state))
-  (with-slots (bogdans level rob-o-man) this
+  (with-slots (bogdans level rob-o-man bogdan-count) this
     (let ((*gameplay* this))
       (setf level (make-instance 'level)
             rob-o-man (make-instance 'rob-o-man))
-      (loop repeat 10
+      (loop repeat bogdan-count
             do (push (make-instance 'bogdan
                                     :speed (+ (random-float 0.5) 1)
                                     :position (find-level-random-position level))
-                     bogdans)))))
+                     bogdans))
+      (spawn-box))))
 
 
 (defun calc-text-width (text)
@@ -45,8 +58,16 @@
     advance))
 
 
+(defmethod objective-reached ((this gameplay-state))
+  (with-slots (box-count level-number) this
+    (decf box-count)
+    (if (> box-count 0)
+        (spawn-box)
+        (gamekit.fistmachine:transition-to 'gameplay-state :level (1+ level-number)))))
+
+
 (defmethod gamekit:draw ((this gameplay-state))
-  (with-slots (renderables) this
+  (with-slots (renderables level-number box-count) this
     (bodge-canvas:clear-buffers *background*)
     (bodge-canvas:antialias-shapes nil)
     (flet ((%y-coord (renderable)
@@ -54,11 +75,11 @@
       (stable-sort renderables #'> :key #'%y-coord)
       (loop for renderable across renderables
             do (render renderable)))
-    (gamekit:draw-text (format nil "Level ~A" 1)
+    (gamekit:draw-text (format nil "Level ~A" level-number)
                        (gamekit:vec2 6 (- (gamekit:viewport-height) 25))
                        :font (gamekit:make-font :retro 34)
                        :fill-color *foreground*)
-    (let ((text (format nil "Left: ~A" 1)))
+    (let ((text (format nil "Left: ~A" box-count)))
       (gamekit:draw-text text
                          (gamekit:vec2 (- (gamekit:viewport-width)
                                           (calc-text-width text)

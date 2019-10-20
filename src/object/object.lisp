@@ -136,10 +136,31 @@
 ;;;
 ;;; OBJECTIVE
 ;;;
-(defclass objective () ())
+(defclass objective ()
+  ((activated :initform nil :reader activatedp)))
 
-(defgeneric activatedp (objective))
 
-(defgeneric activate (objective))
+(defgeneric activatedp (objective)
+  (:method ((this objective))
+    (slot-value this 'activated)))
 
-(defgeneric deactivate (objective))
+
+(defgeneric activate (objective)
+  (:method ((this objective))
+    (with-slots (activated) this
+      (setf activated t))))
+
+
+(defgeneric deactivate (objective)
+  (:method ((this objective))
+    (with-slots (activated) this
+      (setf activated nil))))
+
+
+(defgeneric objective-reached (state))
+
+(defmethod deactivate :around (object)
+  (let ((was-active (activatedp object)))
+    (prog1 (call-next-method)
+      (when (and was-active (not (activatedp object)))
+        (objective-reached *gameplay*)))))

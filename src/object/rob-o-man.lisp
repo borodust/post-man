@@ -71,5 +71,4 @@
     (when (activatedp object)
       (destroy inventory)
       (setf inventory nil)
-      (deactivate object)
-      (spawn-box *level*))))
+      (deactivate object))))

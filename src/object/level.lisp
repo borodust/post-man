@@ -12,6 +12,15 @@
   (:default-initargs :position (gamekit:vec2 (1+ *grid-size*) (1+ *grid-size*))))
 
 
+(defun cell->position (cell)
+  (gamekit:vec2 (car cell) (cdr cell)))
+
+
+(defun position->cell (position)
+  (cons (truncate (gamekit:x position))
+        (truncate (gamekit:y position))))
+
+
 (defun %level-obstacle-exists (level cell)
   (with-slots (obstacle-map) level
     (let ((x (car cell))
@@ -88,16 +97,20 @@
                               :node-equal #'equal)))))
 
 
+(defun %obstacle-fits-p (level cell &optional (configuration '((0 . 0))))
+  (not (loop with (cell-x . cell-y) = cell
+             for (relative-x . relative-y) in configuration
+             for x = (+ relative-x cell-x)
+             for y = (+ relative-y cell-y)
+               thereis (%level-obstacle-exists level (cons x y)))))
+
+
 (defun %find-level-random-cell (level &optional (configuration '((0 . 0))))
   (with-slots (obstacle-map) level
     (flet ((%gen ()
              (cons (random-integer *grid-size*) (random-integer *grid-size*)))
            (%collides (cell)
-             (loop with (cell-x . cell-y) = cell
-                   for (relative-x . relative-y) in configuration
-                   for x = (+ relative-x cell-x)
-                   for y = (+ relative-y cell-y)
-                     thereis (%level-obstacle-exists level (cons x y)))))
+             (not (%obstacle-fits-p level cell configuration))))
       (loop for cell = (%gen)
             while (%collides cell)
             finally (return cell)))))
@@ -112,19 +125,28 @@
   (find-level-path level position (find-level-random-position level)))
 
 
-(defun spawn-object (level object)
+(defun %add-object (level object cell)
   (with-slots (obstacle-map object-map objectives) level
-    (let* ((configuration (obstacle-of object))
-           (cell (%find-level-random-cell level configuration)))
-      (update-position object (gamekit:vec2 (car cell) (cdr cell)))
-      (loop with (cell-x . cell-y) = cell
-            for (x-offset . y-offset) in configuration
-            for obstacle-cell = (cons (+ cell-x x-offset) (+ cell-y y-offset))
-            do (setf (gethash obstacle-cell obstacle-map) object))
-      (setf (gethash object object-map) configuration)
-      (when (typep object 'objective)
-        (vector-push-extend object objectives))
-      object)))
+    (let ((configuration (obstacle-of object)))
+      (when (%obstacle-fits-p level cell configuration)
+        (loop with (cell-x . cell-y) = cell
+              for (x-offset . y-offset) in configuration
+              for obstacle-cell = (cons (+ cell-x x-offset) (+ cell-y y-offset))
+              do (setf (gethash obstacle-cell obstacle-map) object))
+        (setf (gethash object object-map) configuration)
+        (when (typep object 'objective)
+          (vector-push-extend object objectives))
+        (update-position object (cell->position cell))
+        object))))
+
+
+(defun add-object (level object position)
+  (%add-object level object (position->cell position)))
+
+
+(defun spawn-object (level object)
+  (let ((cell (%find-level-random-cell level (obstacle-of object))))
+    (%add-object level object cell)))
 
 
 (defun remove-object (level object)
@@ -141,10 +163,6 @@
   object)
 
 
-(defun spawn-box (level)
-  (spawn-object level (make-instance 'box)))
-
-
 (defun spawn-vertical-rack (level)
   (spawn-object level (make-instance 'vertical-rack)))
 
@@ -158,8 +176,7 @@
         if (oddp (random-integer 2))
           do (spawn-vertical-rack level)
         else
-          do (spawn-horizontal-rack level))
-  (spawn-box level))
+          do (spawn-horizontal-rack level)))
 
 
 (defmethod initialize-instance :after ((this level) &key)

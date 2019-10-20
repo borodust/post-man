@@ -1,18 +1,7 @@
 (cl:in-package :post-man)
 
 
-(defclass rack (positionable objective renderable)
-  ((activated :initform nil :reader activatedp)))
-
-
-(defmethod activate ((this rack))
-  (with-slots (activated) this
-    (setf activated t)))
-
-
-(defmethod deactivate ((this rack))
-  (with-slots (activated) this
-    (setf activated nil)))
+(defclass rack (positionable objective renderable) ())
 
 
 (defgeneric %render-rack (rack))

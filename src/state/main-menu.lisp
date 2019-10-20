@@ -42,7 +42,7 @@
 (defun invoke-action (this)
   (with-slots (options selected-option-idx) this
     (case (aref options selected-option-idx)
-      (:start (gamekit.fistmachine:transition-to 'gameplay-state))
+      (:start (gamekit.fistmachine:transition-to 'gameplay-state :level 1))
       (:exit (gamekit:stop)))))
 
 
