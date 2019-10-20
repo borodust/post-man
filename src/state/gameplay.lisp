@@ -6,13 +6,14 @@
    (bogdans :initform (list))
    (rob-o-man :initform nil)
    (renderables :initform (make-array 0 :adjustable t :fill-pointer t))
-   (random-generator :initform nil)))
+   (random-generator :initform nil)
+   (hud-font :initform (gamekit:make-font :retro 50))))
 
 
-(defmethod initialize-instance :after ((this gameplay-state) &key (seed "b00bface"))
+(defmethod initialize-instance :after ((this gameplay-state) &key)
   (with-slots (random-generator) this
     (setf random-generator (random-state:make-generator :mersenne-twister-64
-                                                        (string-hash seed)))))
+                                                        (derive-seed)))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -35,6 +36,13 @@
                      bogdans)))))
 
 
+(defun calc-text-width (text)
+  (multiple-value-bind (origin width height advance)
+      (gamekit:calc-text-bounds text (gamekit:make-font :retro 34))
+    (declare (ignore origin width height))
+    advance))
+
+
 (defmethod gamekit:draw ((this gameplay-state))
   (with-slots (renderables) this
     (bodge-canvas:clear-buffers *background*)
@@ -43,7 +51,19 @@
              (gamekit:y (position-of renderable))))
       (stable-sort renderables #'> :key #'%y-coord)
       (loop for renderable across renderables
-            do (render renderable)))))
+            do (render renderable)))
+    (gamekit:draw-text (format nil "Level ~A" 1)
+                       (gamekit:vec2 6 (- (gamekit:viewport-height) 25))
+                       :font (gamekit:make-font :retro 34)
+                       :fill-color *foreground*)
+    (let ((text (format nil "Boxes left: ~A" 1)))
+      (gamekit:draw-text text
+                         (gamekit:vec2 (- (gamekit:viewport-width)
+                                          (calc-text-width text)
+                                          6)
+                                       (- (gamekit:viewport-height) 25))
+                         :font (gamekit:make-font :retro 34)
+                         :fill-color *foreground*))))
 
 
 (defmethod gamekit:act ((this gameplay-state))
