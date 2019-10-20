@@ -1,7 +1,7 @@
 (cl:in-package :post-man)
 
 
-(defclass rack (positionable objective)
+(defclass rack (positionable objective renderable)
   ((activated :initform nil :reader activatedp)))
 
 
@@ -14,21 +14,20 @@
   (with-slots (activated) this
     (setf activated nil)))
 
-(defgeneric %rack-block-translate (rack))
+
+(defgeneric %render-rack (rack))
+
+
+(defgeneric %render-active-rack (rack))
+
 
 (defmethod render ((this rack))
-  (gamekit:with-pushed-canvas ()
-    (let ((color (if (activatedp this)
-                     (gamekit:vec4 0.4 0.4 0.9 1)
-                     *foreground*)))
-      (flet ((%render-block ()
-               (gamekit:draw-rect *origin* *grid-cell-width* *grid-cell-width*
-                                  :fill-paint color)))
-        (gamekit:translate-canvas (* (gamekit:x (position-of this)) *grid-cell-width*)
-                                  (* (gamekit:y (position-of this)) *grid-cell-width*))
-        (%render-block)
-        (%rack-block-translate this)
-        (%render-block)))))
+  (translate-position (position-of this))
+  (gamekit:scale-canvas 0.5 0.5)
+  (if (activatedp this)
+      (%render-active-rack this)
+      (%render-rack this)))
+
 
 (defclass vertical-rack (rack) ())
 
@@ -36,8 +35,13 @@
 (defmethod obstacle-of ((this vertical-rack))
   '((0 . 0) (0 . 1)))
 
-(defmethod %rack-block-translate ((this vertical-rack))
-  (gamekit:translate-canvas 0 *grid-cell-width*))
+
+(defmethod %render-active-rack ((this vertical-rack))
+  (gamekit:draw-image *origin* :vertical-rack-active))
+
+
+(defmethod %render-rack ((this vertical-rack))
+  (gamekit:draw-image *origin* :vertical-rack))
 
 
 
@@ -47,5 +51,10 @@
 (defmethod obstacle-of ((this horizontal-rack))
   '((0 . 0) (1 . 0)))
 
-(defmethod %rack-block-translate ((this horizontal-rack))
-  (gamekit:translate-canvas *grid-cell-width* 0))
+
+(defmethod %render-active-rack ((this horizontal-rack))
+  (gamekit:draw-image *origin* :horizontal-rack-active))
+
+
+(defmethod %render-rack ((this horizontal-rack))
+  (gamekit:draw-image *origin* :horizontal-rack))

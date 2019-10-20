@@ -21,12 +21,6 @@
 (defparameter *grid-size* 20)
 
 
-(defgeneric render (object))
-
-
-(defgeneric update (object))
-
-
 (defun vec= (this that)
   (and (< (abs (- (gamekit:x this) (gamekit:x that))) single-float-epsilon)
        (< (abs (- (gamekit:y this) (gamekit:y that))) single-float-epsilon)))
@@ -65,3 +59,31 @@
                           (bodge-heap:binary-heap-push paths
                                                        (list* head (list* child path))))
             finally (return (nreverse path))))))
+
+
+(defun to-isometric (position &key (width-factor 0.5) (height-factor 0.5)
+                                tile-width tile-height)
+  (let* ((x-iso (* (- (gamekit:x position) (gamekit:y position))
+                   (if tile-width
+                       (/ tile-width *grid-cell-width* 2)
+                       width-factor)))
+         (y-iso (* (+ (gamekit:x position) (gamekit:y position))
+                   (if tile-height
+                       (/ tile-height *grid-cell-width* 2)
+                       height-factor))))
+    (gamekit:vec2 x-iso y-iso)))
+
+
+(defun translate-isometric (position &key (width-factor 0.5) (height-factor 0.5)
+                                       tile-width tile-height)
+  (let ((position (to-isometric position :width-factor width-factor
+                                         :height-factor height-factor
+                                         :tile-width tile-width
+                                         :tile-height tile-height)))
+    (gamekit:translate-canvas (* (gamekit:x position) *grid-cell-width*)
+                              (* (gamekit:y position) *grid-cell-width*))))
+
+
+(defun translate-position (position)
+  (gamekit:translate-canvas (* (gamekit:x position) *grid-cell-width*)
+                            (* (gamekit:y position) *grid-cell-width*)))

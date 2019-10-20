@@ -3,6 +3,33 @@
 
 (declaim (special *update-delta-time*))
 
+
+(defgeneric destroy (object)
+  (:method (object) (declare (ignore object))))
+
+;;;
+;;; RENDERABLE
+;;;
+(defgeneric render (object))
+
+(defgeneric register-renderable (state renderable))
+(defgeneric remove-renderable (state renderable))
+
+(defclass renderable () ())
+
+(defmethod initialize-instance :after ((this renderable) &key)
+  (register-renderable *gameplay* this))
+
+
+(defmethod destroy :before ((this renderable))
+  (remove-renderable *gameplay* this))
+
+
+(defmethod render :around (object)
+  (declare (ignore object))
+  (gamekit:with-pushed-canvas ()
+    (call-next-method)))
+
 ;;;
 ;;; UPDATABLE
 ;;;

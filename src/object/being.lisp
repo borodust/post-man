@@ -7,7 +7,7 @@
                        (:right . :left)))
 
 
-(defclass being (updatable positionable)
+(defclass being (updatable positionable renderable)
   ((direction :initform nil :reader direction-of)
    (next-position :reader next-position-of)
    (color :initform (gamekit:vec4 0.5 0.5 0.5 1) :initarg :color)
@@ -39,8 +39,7 @@
 (defmethod render ((this being))
   (with-slots (direction color) this
     (gamekit:with-pushed-canvas ()
-      (gamekit:translate-canvas (* (gamekit:x (position-of this)) *grid-cell-width*)
-                                (* (gamekit:y (position-of this)) *grid-cell-width*))
+      (translate-position (position-of this))
       (gamekit:draw-rect *origin*
                          *grid-cell-width* *grid-cell-width*
                          :fill-paint color)

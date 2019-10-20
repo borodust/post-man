@@ -1,10 +1,14 @@
 (cl:in-package :post-man)
 
 
-(defclass level ()
+(defparameter *floor-color* (gamekit:vec4 0.3 0.3 0.3 1))
+
+
+(defclass level (positionable renderable)
   ((obstacle-map :initform (make-hash-table :test 'equal))
    (object-map :initform (make-hash-table))
-   (objectives :initform (make-array 1 :adjustable t :fill-pointer t))))
+   (objectives :initform (make-array 0 :adjustable t :fill-pointer t)))
+  (:default-initargs :position (gamekit:vec2 (1+ *grid-size*) (1+ *grid-size*))))
 
 
 (defun %level-obstacle-exists (level cell)
@@ -56,10 +60,10 @@
       (%level-obstacle-exists level cell))))
 
 
-(defmethod render ((this level))
-  (with-slots (object-map) this
+(defun level-renderable-objects (level)
+  (with-slots (object-map) level
     (loop for object being the hash-key of object-map
-          do (render object))))
+          collect object)))
 
 
 (defun find-level-path (level start goal)
@@ -92,7 +96,7 @@
                    for (relative-x . relative-y) in configuration
                    for x = (+ relative-x cell-x)
                    for y = (+ relative-y cell-y)
-                     thereis (gethash (cons x y) obstacle-map))))
+                     thereis (%level-obstacle-exists level (cons x y)))))
       (loop for cell = (%gen)
             while (%collides cell)
             finally (return cell)))))
@@ -165,3 +169,8 @@
   (with-slots (objectives) level
     (let ((objective (aref objectives (random (length objectives)))))
       (activate objective))))
+
+
+(defmethod render ((this level))
+  (let ((side (* *grid-size* *grid-cell-width*)))
+    (gamekit:draw-rect *origin* side side :fill-paint *floor-color*)))

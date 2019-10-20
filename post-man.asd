@@ -7,7 +7,8 @@
                :trivial-gamekit-postproc
                :trivial-gamekit-fistmachine
                :trivial-gamekit-input-handler
-               :bodge-heap)
+               :bodge-heap
+               :random-state)
   :pathname "src/"
   :serial t
   :components ((:file "packages")

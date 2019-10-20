@@ -2,9 +2,10 @@
 
 
 (defclass gameplay-state (input-handling-state)
-  ((level :initform (make-instance 'level))
+  ((level :initform nil)
    (bogdans :initform (list))
-   (rob-o-man :initform (make-instance 'rob-o-man))))
+   (rob-o-man :initform nil)
+   (renderables :initform (make-array 0 :adjustable t :fill-pointer t))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -16,23 +17,26 @@
 
 
 (defmethod gamekit:post-initialize ((this gameplay-state))
-  (with-slots (bogdans level) this
-    (loop repeat 10
-          do (push (make-instance 'bogdan
-                                  :speed (+ (random 0.5) 1)
-                                  :position (find-level-random-position level))
-                   bogdans))))
+  (with-slots (bogdans level rob-o-man) this
+    (let ((*gameplay* this))
+      (setf level (make-instance 'level)
+            rob-o-man (make-instance 'rob-o-man))
+      (loop repeat 10
+            do (push (make-instance 'bogdan
+                                    :speed (+ (random 0.5) 1)
+                                    :position (find-level-random-position level))
+                     bogdans)))))
 
 
 (defmethod gamekit:draw ((this gameplay-state))
-  (with-slots (level bogdans rob-o-man) this
+  (with-slots (renderables) this
     (bodge-canvas:clear-buffers *background*)
     (bodge-canvas:antialias-shapes nil)
-    (render level)
-    (loop for bogdan in bogdans
-          do (render bogdan))
-    (gamekit:with-pushed-canvas ()
-      (render rob-o-man))))
+    (flet ((%y-coord (renderable)
+             (gamekit:y (position-of renderable))))
+      (stable-sort renderables #'> :key #'%y-coord)
+      (loop for renderable across renderables
+            do (render renderable)))))
 
 
 (defmethod gamekit:act ((this gameplay-state))
@@ -42,6 +46,16 @@
       (update rob-o-man)
       (loop for bogdan in bogdans
             do (update bogdan)))))
+
+
+(defmethod register-renderable ((this gameplay-state) renderable)
+  (with-slots (renderables) this
+    (vector-push-extend renderable renderables)))
+
+
+(defmethod remove-renderable ((this gameplay-state) renderable)
+  (with-slots (renderables) this
+    (deletef renderables renderable)))
 
 
 (defun pause-game ()

@@ -10,11 +10,13 @@
   (with-slots (options selected-option-idx) this
     (bodge-canvas:clear-buffers *background*)
     (gamekit:with-pushed-canvas ()
-      (gamekit:translate-canvas 230 290)
+      (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 160)
+                                (/ (gamekit:viewport-height) 2))
       (gamekit:scale-canvas 0.5 0.5)
       (gamekit:draw-image (gamekit:vec2 0 0) :splash))
     (gamekit:with-pushed-canvas ()
-      (gamekit:translate-canvas 300 120)
+      (gamekit:translate-canvas (- (/ (gamekit:viewport-width) 2) 100)
+                                (- (/ (gamekit:viewport-height) 2) 180))
       (gamekit:scale-canvas 2 2)
       (loop for i from 0
             for option across options

@@ -33,28 +33,45 @@
 
 
 (defmethod render ((this rob-o-man))
-  (call-next-method)
   (with-slots (inventory) this
-    (when inventory
-      (gamekit:translate-canvas 0 -10)
-      (when-let ((direction (direction-of this)))
+    (gamekit:with-pushed-canvas ()
+      (when inventory
+        (gamekit:translate-canvas 8 0)
+        (when-let ((direction (direction-of this)))
+          (case direction
+            (:up (gamekit:translate-canvas 0 10) (render inventory))))))
+    (gamekit:with-pushed-canvas ()
+      (translate-position (position-of this))
+      (gamekit:translate-canvas -9 0)
+      (gamekit:scale-canvas 0.5 0.5)
+      (if-let ((direction (direction-of this)))
         (case direction
-          (:up (gamekit:translate-canvas 0 10))
-          (:down (gamekit:translate-canvas 0 -10))
-          (:left (gamekit:translate-canvas -10 0))
-          (:right (gamekit:translate-canvas 10 0))))
-      (render inventory))))
+          (:up (gamekit:draw-image *origin* :rob-o-man-back))
+          (:down (gamekit:draw-image *origin* :rob-o-man-front))
+          (:left (gamekit:draw-image *origin* :rob-o-man-left))
+          (:right (gamekit:draw-image *origin* :rob-o-man-right)))
+        (gamekit:draw-image *origin* :rob-o-man-front)))
+    (when inventory
+      (gamekit:translate-canvas 8 0)
+      (if-let ((direction (direction-of this)))
+        (case direction
+          (:down (gamekit:translate-canvas 0 -2) (render inventory))
+          (:left (gamekit:translate-canvas -2 0) (render inventory))
+          (:right (gamekit:translate-canvas 2 0) (render inventory)))
+        (render inventory)))))
 
 
 (defmethod interact ((this rob-o-man) (object box))
   (with-slots (inventory) this
     (setf inventory (remove-object *level* object))
+    (remove-renderable *gameplay* inventory)
     (pick-objective *level*)))
 
 
 (defmethod interact ((this rob-o-man) (object rack))
   (with-slots (inventory) this
     (when (activatedp object)
+      (destroy inventory)
       (setf inventory nil)
       (deactivate object)
       (spawn-box *level*))))

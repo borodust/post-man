@@ -7,6 +7,20 @@
   (:default-initargs :speed 1 :color (gamekit:vec4 0.4 0.1 0.1 1)))
 
 
+(defmethod render ((this bogdan))
+  (gamekit:with-pushed-canvas ()
+    (translate-position (position-of this))
+    (gamekit:translate-canvas -5 0)
+    (gamekit:scale-canvas 0.5 0.5)
+    (if-let ((direction (direction-of this)))
+      (case direction
+        (:up (gamekit:draw-image *origin* :bogdan-back))
+        (:down (gamekit:draw-image *origin* :bogdan-front))
+        (:left (gamekit:draw-image *origin* :bogdan-left))
+        (:right (gamekit:draw-image *origin* :bogdan-right)))
+      (gamekit:draw-image *origin* :bogdan-front))))
+
+
 (defmethod update ((this bogdan))
   (call-next-method)
   (with-slots (path pause) this
