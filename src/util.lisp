@@ -115,10 +115,3 @@
         else
           do (setf accumulator (* accumulator (- value 128)))
         finally (return (logxor result accumulator))))
-
-
-(defgeneric generate-seed (game))
-
-
-(defun derive-seed ()
-  (generate-seed (gamekit:gamekit)))

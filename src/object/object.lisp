@@ -158,6 +158,8 @@
 
 
 (defgeneric objective-reached (state))
+(defgeneric player-captured (state))
+
 
 (defmethod deactivate :around (object)
   (let ((was-active (activatedp object)))

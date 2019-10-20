@@ -7,11 +7,12 @@
                        (:right . :left)))
 
 
-(defclass being (updatable positionable renderable)
+(defclass being (updatable positionable bounded renderable)
   ((direction :initform nil :reader direction-of)
    (next-position :reader next-position-of)
    (color :initform (gamekit:vec4 0.5 0.5 0.5 1) :initarg :color)
-   (speed :initform 1 :initarg :speed)))
+   (speed :initform 1 :initarg :speed))
+  (:default-initargs :bound (gamekit:vec2 1 1)))
 
 
 (defmethod initialize-instance :after ((this being) &key)
@@ -34,6 +35,11 @@
       (setf direction next-direction
             next-position (gamekit:add next-position
                                        (direction->vector next-direction))))))
+
+
+(defun update-speed (being new-speed)
+  (with-slots (speed) being
+    (setf speed new-speed)))
 
 
 (defmethod render ((this being))

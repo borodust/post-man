@@ -42,7 +42,9 @@
 (defun invoke-action (this)
   (with-slots (options selected-option-idx) this
     (case (aref options selected-option-idx)
-      (:start (gamekit.fistmachine:transition-to 'gameplay-state :level 1))
+      (:start (gamekit.fistmachine:transition-to 'gameplay-state
+                                                 :level 1
+                                                 :seed (string-hash *seed*)))
       (:exit (gamekit:stop)))))
 
 

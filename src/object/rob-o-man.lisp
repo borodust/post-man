@@ -1,9 +1,13 @@
 (cl:in-package :post-man)
 
+(defparameter *rob-o-man-free-speed* 3)
+(defparameter *rob-o-man-carry-speed* 2)
+
 
 (defclass rob-o-man (being)
   ((inventory :initform nil))
-  (:default-initargs :speed 2 :color (gamekit:vec4 0.1 0.4 0.1 1)))
+  (:default-initargs :speed *rob-o-man-free-speed*
+                     :color (gamekit:vec4 0.1 0.4 0.1 1)))
 
 
 (defun select-direction (button-bag)
@@ -62,6 +66,7 @@
 (defmethod interact ((this rob-o-man) (object box))
   (with-slots (inventory) this
     (setf inventory (remove-object *level* object))
+    (update-speed this *rob-o-man-carry-speed*)
     (remove-renderable *gameplay* inventory)
     (pick-objective *level*)))
 
@@ -71,4 +76,5 @@
     (when (activatedp object)
       (destroy inventory)
       (setf inventory nil)
+      (update-speed this *rob-o-man-free-speed*)
       (deactivate object))))

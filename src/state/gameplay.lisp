@@ -12,16 +12,19 @@
    (level-number :initform nil)
    (box-count :initform nil)
    (bogdan-count :initform nil)
-   (hud-font :initform (gamekit:make-font :retro 50))))
+   (hud-font :initform (gamekit:make-font :retro 50))
+   (seed :initform (error ":seed missing") :initarg :seed)
+   (next-seed :initform nil)))
 
 
 (defmethod initialize-instance :after ((this gameplay-state) &key level)
-  (with-slots (random-generator level-number box-count bogdan-count) this
-    (setf random-generator (random-state:make-generator :mersenne-twister-64
-                                                        (derive-seed))
-          level-number level
-          box-count (min *max-box-count* (* 5 (1+ (truncate (/ level 5)))))
-          bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 5))))))))
+  (with-slots (random-generator level-number box-count bogdan-count seed next-seed) this
+    (let ((*gameplay* this))
+      (setf random-generator (random-state:make-generator :mersenne-twister-64 seed)
+            level-number level
+            box-count (min *max-box-count* (* 5 (1+ (truncate (/ level 5)))))
+            bogdan-count (min *max-bogdan-count* (+ 10 (* 2 (truncate (/ level 5)))))
+            next-seed (random-integer #xFFFFFFFFFFFFFFFF)))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -59,11 +62,17 @@
 
 
 (defmethod objective-reached ((this gameplay-state))
-  (with-slots (box-count level-number) this
+  (with-slots (box-count level-number next-seed) this
     (decf box-count)
     (if (> box-count 0)
         (spawn-box)
-        (gamekit.fistmachine:transition-to 'gameplay-state :level (1+ level-number)))))
+        (gamekit.fistmachine:transition-to 'gameplay-state :level (1+ level-number)
+                                           :seed next-seed))))
+
+
+(defmethod player-captured ((this gameplay-state))
+  (with-slots () this
+    (gamekit.fistmachine:transition-to 'main-menu-state)))
 
 
 (defmethod gamekit:draw ((this gameplay-state))
