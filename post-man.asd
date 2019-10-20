@@ -8,7 +8,8 @@
                :trivial-gamekit-fistmachine
                :trivial-gamekit-input-handler
                :bodge-heap
-               :random-state)
+               :random-state
+               :babel)
   :pathname "src/"
   :serial t
   :components ((:file "packages")

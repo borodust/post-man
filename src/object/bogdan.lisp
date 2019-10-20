@@ -36,4 +36,4 @@
                                ((< (gamekit:y vector) -0.5) :down)))))
         (when (< pause 0)
           (setf path (find-level-random-path *level* (position-of this)))
-          (setf pause (+ (random 10.0) 1.0))))))
+          (setf pause (+ (random-float 10.0) 1.0))))))

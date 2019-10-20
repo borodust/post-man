@@ -87,3 +87,29 @@
 (defun translate-position (position)
   (gamekit:translate-canvas (* (gamekit:x position) *grid-cell-width*)
                             (* (gamekit:y position) *grid-cell-width*)))
+
+
+(defgeneric generate-random-integer (state bound))
+(defgeneric generate-random-float (state bound))
+
+
+(defun random-integer (bound)
+  (generate-random-integer *gameplay* bound))
+
+
+(defun random-float (bound)
+  (generate-random-float *gameplay* bound))
+
+
+(defun string-hash (string)
+  (loop with accumulator = 1
+        with result = 0
+        for value across (babel:string-to-octets string)
+        for i = 0 then (1+ i)
+        if (and (> i 0) (= (mod i 8) 0))
+          do (setf result (logxor result accumulator)
+                   accumulator 1
+                   i 0)
+        else
+          do (setf accumulator (* accumulator (- value 128)))
+        finally (return (logxor result accumulator))))

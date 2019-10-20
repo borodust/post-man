@@ -90,7 +90,7 @@
 (defun %find-level-random-cell (level &optional (configuration '((0 . 0))))
   (with-slots (obstacle-map) level
     (flet ((%gen ()
-             (cons (random *grid-size*) (random *grid-size*)))
+             (cons (random-integer *grid-size*) (random-integer *grid-size*)))
            (%collides (cell)
              (loop with (cell-x . cell-y) = cell
                    for (relative-x . relative-y) in configuration
@@ -154,7 +154,7 @@
 
 (defun fill-level (level)
   (loop repeat *grid-size*
-        if (oddp (random 2))
+        if (oddp (random-integer 2))
           do (spawn-vertical-rack level)
         else
           do (spawn-horizontal-rack level))
@@ -167,7 +167,7 @@
 
 (defun pick-objective (level)
   (with-slots (objectives) level
-    (let ((objective (aref objectives (random (length objectives)))))
+    (let ((objective (aref objectives (random-integer (length objectives)))))
       (activate objective))))
 
 

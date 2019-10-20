@@ -5,7 +5,14 @@
   ((level :initform nil)
    (bogdans :initform (list))
    (rob-o-man :initform nil)
-   (renderables :initform (make-array 0 :adjustable t :fill-pointer t))))
+   (renderables :initform (make-array 0 :adjustable t :fill-pointer t))
+   (random-generator :initform nil)))
+
+
+(defmethod initialize-instance :after ((this gameplay-state) &key (seed "b00bface"))
+  (with-slots (random-generator) this
+    (setf random-generator (random-state:make-generator :mersenne-twister-64
+                                                        (string-hash seed)))))
 
 
 (defmacro with-bound-objects ((state) &body body)
@@ -23,7 +30,7 @@
             rob-o-man (make-instance 'rob-o-man))
       (loop repeat 10
             do (push (make-instance 'bogdan
-                                    :speed (+ (random 0.5) 1)
+                                    :speed (+ (random-float 0.5) 1)
                                     :position (find-level-random-position level))
                      bogdans)))))
 
@@ -89,3 +96,13 @@
 (defmethod gamekit.input-handler:button-pressed ((this gameplay-state)
                                                  (button (eql :gamepad-x)))
   (interact-with-obstacles this))
+
+
+(defmethod generate-random-integer ((this gameplay-state) bound)
+  (with-slots (random-generator) this
+    (random-state:random-int random-generator 0 (1- bound))))
+
+
+(defmethod generate-random-float ((this gameplay-state) bound)
+  (with-slots (random-generator) this
+    (random-state:random-float random-generator 0 (- bound single-float-epsilon))))
