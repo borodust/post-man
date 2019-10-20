@@ -2,6 +2,7 @@
 
 
 (defparameter *floor-color* (gamekit:vec4 0.3 0.3 0.3 1))
+(defparameter *obstacle-count* (truncate (* *grid-size* 1.5)))
 
 
 (defclass level (positionable renderable)
@@ -153,7 +154,7 @@
 
 
 (defun fill-level (level)
-  (loop repeat *grid-size*
+  (loop repeat *obstacle-count*
         if (oddp (random-integer 2))
           do (spawn-vertical-rack level)
         else

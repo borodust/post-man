@@ -7,6 +7,8 @@
    (rob-o-man :initform nil)
    (renderables :initform (make-array 0 :adjustable t :fill-pointer t))
    (random-generator :initform nil)
+   (difficulty :initform 0)
+   (boxes :initform 0)
    (hud-font :initform (gamekit:make-font :retro 50))))
 
 
@@ -56,7 +58,7 @@
                        (gamekit:vec2 6 (- (gamekit:viewport-height) 25))
                        :font (gamekit:make-font :retro 34)
                        :fill-color *foreground*)
-    (let ((text (format nil "Boxes left: ~A" 1)))
+    (let ((text (format nil "Left: ~A" 1)))
       (gamekit:draw-text text
                          (gamekit:vec2 (- (gamekit:viewport-width)
                                           (calc-text-width text)

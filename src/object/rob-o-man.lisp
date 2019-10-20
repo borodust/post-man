@@ -36,7 +36,6 @@
   (with-slots (inventory) this
     (gamekit:with-pushed-canvas ()
       (when inventory
-        (gamekit:translate-canvas 8 0)
         (when-let ((direction (direction-of this)))
           (case direction
             (:up (gamekit:translate-canvas 0 10) (render inventory))))))
@@ -52,12 +51,11 @@
           (:right (gamekit:draw-image *origin* :rob-o-man-right)))
         (gamekit:draw-image *origin* :rob-o-man-front)))
     (when inventory
-      (gamekit:translate-canvas 8 0)
       (if-let ((direction (direction-of this)))
         (case direction
           (:down (gamekit:translate-canvas 0 -2) (render inventory))
-          (:left (gamekit:translate-canvas -2 0) (render inventory))
-          (:right (gamekit:translate-canvas 2 0) (render inventory)))
+          (:left (gamekit:translate-canvas -4 0) (render inventory))
+          (:right (gamekit:translate-canvas 4 0) (render inventory)))
         (render inventory)))))
 
 
