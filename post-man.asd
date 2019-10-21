@@ -6,7 +6,6 @@
   :license "GPLv3"
   :depends-on (:alexandria
                :trivial-gamekit
-               :trivial-gamekit-postproc
                :trivial-gamekit-fistmachine
                :trivial-gamekit-input-handler
                :bodge-heap
