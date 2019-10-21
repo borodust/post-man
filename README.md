@@ -19,6 +19,8 @@ page.
 
 To run from REPL, clone project into `~/quicklisp/local-projects/` and
 ```lisp
+(ql-dist:install-dist "http://bodge.borodust.org/dist/org.borodust.bodge.testing.txt")
+
 (ql:register-local-projects)
 
 (ql:quickload :post-man)
