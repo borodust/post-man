@@ -25,8 +25,8 @@ install:
   - pacman --noconfirm -S zip mingw-w64-x86_64-git-lfs
   - git lfs install
   - git lfs pull
-  - curl -L http://bodge.borodust.org/files/install.sh | sh -s ccl
-  - sh -c "$HOME/.bodge/bin/lisp install-dist"
+  - curl -L http://bodge.borodust.org/files/install.sh | sh
+  - sh -c "$HOME/.bodge/bin/lisp install-testing-dist"
 
 
 build_script:
