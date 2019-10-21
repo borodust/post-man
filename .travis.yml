@@ -33,9 +33,9 @@ before_install:
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install git-lfs; fi
-  - curl -L http://bodge.borodust.org/files/install.sh | sh
+  - curl -L http://bodge.borodust.org/files/install.sh | sh -s ccl
   - git lfs install && git lfs pull
-  - lisp install-testing-dist
+  - lisp install-dist
 
 script:
   - >
