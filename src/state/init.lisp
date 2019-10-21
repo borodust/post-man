@@ -12,7 +12,8 @@
                              :bogdan-right :bogdan-left
                              :box :floor
                              :horizontal-rack :horizontal-rack-active
-                             :vertical-rack :vertical-rack-active))
+                             :vertical-rack :vertical-rack-active
+                             :menu-tune :gameplay-tune :capture-tune))
 
 (defmethod gamekit:draw ((this init-state))
   (with-slots (ui-font) this

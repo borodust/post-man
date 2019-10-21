@@ -12,6 +12,16 @@
    (selected-option-idx :initform 1)))
 
 
+(defmethod gamekit:post-initialize ((this main-menu-state))
+  (gamekit:stop-sound :gameplay-tune)
+  (gamekit:stop-sound :capture-tune)
+  (gamekit:play-sound :menu-tune :looped-p t))
+
+
+(defmethod gamekit:pre-destroy ((this main-menu-state))
+  (gamekit:stop-sound :menu-tune))
+
+
 (defmethod gamekit:draw ((this main-menu-state))
   (with-slots (options selected-option-idx) this
     (bodge-canvas:clear-buffers *background*)

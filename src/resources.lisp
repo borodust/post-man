@@ -69,3 +69,12 @@
 (gamekit:define-image :floor
   "images/level/floor.png"
   :use-nearest-interpolation t)
+
+;;;
+;;; MUSIC
+;;;
+(gamekit:define-sound :menu-tune "music/Alexander Nakarada - Be Jammin.ogg")
+
+(gamekit:define-sound :gameplay-tune "music/Kevin MacLeod - Funky Energy Loop.ogg")
+
+(gamekit:define-sound :capture-tune "music/Rafael Krux - Horror Suspense.ogg")
