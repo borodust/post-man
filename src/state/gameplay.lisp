@@ -84,7 +84,6 @@
 
 (defmethod gamekit:post-initialize ((this gameplay-state))
   (with-slots (bogdans level rob-o-man bogdan-count) this
-    (gamekit:play-sound :gameplay-tune :looped-p t)
     (let ((*gameplay* this))
       (setf level (make-instance 'level)
             rob-o-man (make-instance 'rob-o-man))

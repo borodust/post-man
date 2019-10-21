@@ -78,3 +78,14 @@
 (gamekit:define-sound :gameplay-tune "music/Kevin MacLeod - Funky Energy Loop.ogg")
 
 (gamekit:define-sound :capture-tune "music/Rafael Krux - Horror Suspense.ogg")
+
+
+;;;
+;;; SFX
+;;;
+(gamekit:define-sound :user-action "sounds/404049__deathscyp__breaker-1.wav")
+
+(gamekit:define-sound :box-pick-up
+  "sounds/422651__trullilulli__sfx-player-action-phone-pick-up.wav")
+
+(gamekit:define-sound :box-drop "sounds/272065__bexhillcollege__thrown-object.wav")

@@ -43,20 +43,25 @@
 
 (defun select-next-menu-option (state)
   (with-slots (options selected-option-idx) state
+    (play-user-action-sound)
     (setf selected-option-idx (mod (1+ selected-option-idx) (length options)))))
 
 
 (defun select-prev-menu-option (state)
   (with-slots (options selected-option-idx) state
+    (play-user-action-sound)
     (setf selected-option-idx (mod (1- selected-option-idx) (length options)))))
 
 
 (defun invoke-action (this)
   (with-slots (options selected-option-idx) this
+    (play-user-action-sound)
     (case (aref options selected-option-idx)
-      (:start (gamekit.fistmachine:transition-to 'gameplay-state
-                                                 :level 1
-                                                 :seed (string-hash *seed*)))
+      (:start
+       (gamekit:play-sound :gameplay-tune :looped-p t)
+       (gamekit.fistmachine:transition-to 'gameplay-state
+                                          :level 1
+                                          :seed (string-hash *seed*)))
       (:exit (gamekit:stop)))))
 
 

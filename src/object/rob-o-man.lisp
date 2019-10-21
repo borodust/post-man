@@ -53,6 +53,7 @@
 
 (defmethod interact ((this rob-o-man) (object box))
   (with-slots (inventory) this
+    (play-box-pick-up-sound)
     (setf inventory (remove-object *level* object))
     (update-speed this *rob-o-man-carry-speed*)
     (remove-renderable *gameplay* inventory)
@@ -62,6 +63,7 @@
 (defmethod interact ((this rob-o-man) (object rack))
   (with-slots (inventory) this
     (when (activatedp object)
+      (play-box-drop-sound)
       (destroy inventory)
       (setf inventory nil)
       (update-speed this *rob-o-man-free-speed*)

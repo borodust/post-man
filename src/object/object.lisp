@@ -166,3 +166,7 @@
     (prog1 (call-next-method)
       (when (and was-active (not (activatedp object)))
         (objective-reached *gameplay*)))))
+
+
+(defun play-user-action-sound ()
+  (gamekit:play-sound :user-action))
