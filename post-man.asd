@@ -1,3 +1,5 @@
+(pushnew :bodge-gl2 *features*)
+
 (asdf:defsystem :post-man
   :description "Autumn Lisp Game Jam 2019 entry"
   :author ""
